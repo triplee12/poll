@@ -1,0 +1,1 @@
+# Fastapi Poll Application
