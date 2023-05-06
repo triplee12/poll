@@ -6,11 +6,24 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
 
-class PollType(Enum, str):
+class PollType(str, Enum):
     """Poll type choices."""
 
-    text = "text"
+    txt = "text"
     image = "image"
+
+
+class TokenData(BaseModel):
+    """Token data."""
+
+    uuid_pk: str
+    username: str
+
+
+class AccessToken(BaseModel):
+    """Access Token schema class"""
+    access_token: str
+    token_type: str
 
 
 class User(BaseModel):

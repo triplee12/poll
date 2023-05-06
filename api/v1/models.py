@@ -6,7 +6,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
-from database_cofig import Base
+from .database_config import Base
 
 
 class User(Base):
@@ -34,7 +34,10 @@ class Poll(Base):
     __tablename__ = "polls"
     id = Column(Integer, primary_key=True, nullable=False)
     title = Column(String(length=150), nullable=False)
-    poll_type = Column(Enum("text", "image"), nullable=False)
+    poll_type = Column(
+        Enum("text", "image", name="poll_type_enum", create_type=False),
+        nullable=False
+    )
     created_by = Column(
         UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
         nullable=False
@@ -66,7 +69,7 @@ class Choice(Base):
     )
     poll = relationship("Poll", back_populates="choices",
                         foreign_keys=[poll_id])
-    text = Column(String(length=50), nullable=True)
+    txt = Column("text", String(length=50), nullable=True)
     image = Column(String(length=250), nullable=True)
     votes = relationship("Vote", back_populates="choice")
     created_by = Column(
@@ -126,13 +129,14 @@ class Moderator(Base):
 class Ban(Base):
     """Ban a user from voting."""
 
+    __tablename__ = "ban"
     id = Column(Integer, nullable=False, primary_key=True)
     poll_owner_id = Column(
         UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
         nullable=False
     )
     banned_by = Column(
-        UUID, ForeignKey("users.username", ondelete="CASCADE"),
+        String, ForeignKey("users.username", ondelete="CASCADE"),
         nullable=False
     )
     user_id = Column(
