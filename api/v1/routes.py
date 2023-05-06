@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Routes."""
+"""Poll routes."""
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
@@ -52,25 +52,29 @@ async def retrieve_poll_by_id(id_: int, session: Session = Depends(get_db)):
 
 @poll_router.put("/update/{id_}", response_model=PollSchema)
 async def update_poll(
-    id_: int, session: Session = Depends(get_db),
+    id_: int, poll: PollSchema, session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
     """Update a poll."""
-    get_poll = session.query(Poll).filter(Poll.id == id_).first()
+    get_poll = session.query(Poll).filter(Poll.id == id_)
 
-    if not get_poll:
+    if not get_poll.first():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Poll not found"
         )
 
-    if get_poll.created_by != current_user.username:
+    if get_poll.first().created_by != current_user.username:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied"
         )
 
-    get_poll.updated_at = datetime.utcnow()
+    get_poll.first().updated_at = datetime.utcnow()
+    updated = get_poll.update(**poll.dict(), synchronize_session=False)
+    session.commit()
+    session.refresh(updated)
+    return updated
 
 
 @poll_router.delete("/delete/{id_}")

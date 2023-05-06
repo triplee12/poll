@@ -2,6 +2,7 @@
 """Poll schema."""
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
@@ -21,7 +22,8 @@ class TokenData(BaseModel):
 
 
 class AccessToken(BaseModel):
-    """Access Token schema class"""
+    """Access Token schema class."""
+
     access_token: str
     token_type: str
 
@@ -40,9 +42,8 @@ class Poll(BaseModel):
 
     title: str
     poll_type: PollType
-    created_by: str
-    created_at: datetime
-    updated_at: datetime
+    created_by: Optional[str]
+    updated_at: Optional[datetime]
     is_add_choices_active: bool
     is_voting_active: bool
 
