@@ -33,8 +33,8 @@ class User(BaseModel):
 
     username: str
     email: EmailStr
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
 
 class Poll(BaseModel):
@@ -56,8 +56,8 @@ class Choice(BaseModel):
     image: str
     votes: int
     created_by: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
 
 class Moderator(BaseModel):
@@ -65,8 +65,8 @@ class Moderator(BaseModel):
 
     mod_for: str
     mod_user: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
 
 class Ban(BaseModel):
@@ -75,5 +75,5 @@ class Ban(BaseModel):
     poll_owner_id: UUID
     banned_by: str
     user_id: UUID
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]

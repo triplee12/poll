@@ -112,6 +112,10 @@ class Moderator(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     mod_for = Column(String(length=150), nullable=False)
     mod_user = Column(
+        UUID, ForeignKey("users.uuid_pk"),
+        nullable=False
+    )
+    created_by = Column(
         UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
         nullable=False
     )

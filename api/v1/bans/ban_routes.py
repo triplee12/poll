@@ -49,7 +49,7 @@ async def retrieve_banned_users(
     users = await session.query(Ban).all()
     moderator = await session.query(
         Moderator
-    ).filter(Moderator.mod_user == current_user.username).first()
+    ).filter(Moderator.mod_user == current_user.uuid_pk).first()
 
     if moderator:
         return users
@@ -69,7 +69,7 @@ async def get_user(
     user = await session.query(Ban).filter(Ban.user_id == user_id).first()
     moderator = await session.query(
         Moderator
-    ).filter(Moderator.mod_user == current_user.username).first()
+    ).filter(Moderator.mod_user == current_user.uuid_pk).first()
 
     if not user and moderator:
         raise HTTPException(
@@ -95,7 +95,7 @@ async def unban_user(
     user = session.query(Ban).filter(Ban.user_id == user_id)
     moderator = session.query(
         Moderator
-    ).filter(Moderator.mod_user == current_user.username).first()
+    ).filter(Moderator.mod_user == current_user.uuid_pk).first()
 
     if not user.first() and moderator:
         raise HTTPException(
