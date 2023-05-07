@@ -1,18 +1,19 @@
 #!/usr/bin/python3
 """Bans user routes."""
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Response, status, Depends
 from sqlalchemy.orm import Session
 from api.v1.database_config import get_db
-from api.v1.schema import Ban as BanSchema
 from api.v1.models import Ban, User, Moderator
 from api.v1.users.oauth import get_current_user
+from .schemas import BanSchema, BanRes
 
 ban_router = APIRouter(prefix="/ban", tags=["ban"])
 
 
-@ban_router.post("/{user_id}", response_model=BanSchema)
+@ban_router.post("/{user_id}", response_model=BanRes)
 async def ban_user(
-    user_id: str, ban: BanSchema, session: Session = Depends(get_db),
+    user_id: str, ban: BanSchema, response: Response,
+    session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
     """Ban a user."""
@@ -36,11 +37,12 @@ async def ban_user(
     new_ban = Ban(**ban.dict())
     session.add(new_ban)
     session.commit()
+    response.status_code = status.HTTP_201_CREATED
 
     return {"message": "user has been banned from voting"}
 
 
-@ban_router.get("/users")
+@ban_router.get("/users", response_model=BanRes)
 async def retrieve_banned_users(
     session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -60,7 +62,7 @@ async def retrieve_banned_users(
     )
 
 
-@ban_router.get("/users/{user_id}")
+@ban_router.get("/users/{user_id}", response_model=BanRes)
 async def get_user(
     user_id: str, session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)

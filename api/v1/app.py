@@ -6,9 +6,9 @@ from api.v1.users.user_routes import user_router
 from api.v1.bans.ban_routes import ban_router
 from api.v1.choices.choice_route import choice_router
 from api.v1.votes.vote_routes import vote_router
+from api.v1.polls.poll_routes import poll_router
 from .database_config import engine
 from .models import Base
-from .routes import poll_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(
@@ -27,7 +27,7 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.get("/api")
 async def index():
     """Poll API."""
     return {"message": "Poll API"}

@@ -5,13 +5,13 @@ from fastapi import APIRouter, HTTPException, Response, status, Depends
 from sqlalchemy.orm import Session
 from api.v1.database_config import get_db
 from api.v1.users.oauth import get_current_user
-from api.v1.schema import Choice as ChoiceSchema
+from .schemas import ChoiceSchema, ChoiceRes
 from api.v1.models import Choice
 
 choice_router = APIRouter(prefix="/choices", tags=["choices"])
 
 
-@choice_router.get("/", response_model=ChoiceSchema)
+@choice_router.get("/", response_model=ChoiceRes)
 async def get_choices(
     session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -24,7 +24,7 @@ async def get_choices(
         return {"message": "no choices available"}
 
 
-@choice_router.get("/{id_}", response_model=ChoiceSchema)
+@choice_router.get("/{id_}", response_model=ChoiceRes)
 async def get_choice_by_id(
     id_: int, session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -42,7 +42,7 @@ async def get_choice_by_id(
         )
 
 
-@choice_router.put("/{id_}/update", response_model=ChoiceSchema)
+@choice_router.put("/{id_}/update", response_model=ChoiceRes)
 async def update_choice(
     id_: int, to_update: ChoiceSchema,
     session: Session = Depends(get_db),
@@ -75,7 +75,7 @@ async def update_choice(
         )
 
 
-@choice_router.delete("/{id_}/delete", response_model=ChoiceSchema)
+@choice_router.delete("/{id_}/delete")
 async def delete_choice(
     id_: int, session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -105,7 +105,7 @@ async def delete_choice(
         )
 
 
-@choice_router.post("/create", response_model=ChoiceSchema)
+@choice_router.post("/create", response_model=ChoiceRes)
 async def create_choice(
     choice: ChoiceSchema, response: Response,
     session: Session = Depends(get_db),

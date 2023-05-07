@@ -1,19 +1,17 @@
 #!/usr/bin/python3
 """Poll routes."""
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Response, status, Depends
 from sqlalchemy.orm import Session
-
 from api.v1.users.oauth import get_current_user
-
-from .models import Poll
-from .database_config import get_db
-from .schema import Poll as PollSchema
+from api.v1.database_config import get_db
+from api.v1.models import Poll
+from .schemas import PollSchema, PollRes
 
 poll_router = APIRouter(prefix="/polls", tags=["poll"])
 
 
-@poll_router.get("/")
+@poll_router.get("/", response_model=PollRes)
 async def retrieve_polls(session: Session = Depends(get_db)):
     """Retrieve all polls."""
     polls = session.query(Poll).all()
@@ -22,9 +20,10 @@ async def retrieve_polls(session: Session = Depends(get_db)):
     return {"message": "No polls available"}
 
 
-@poll_router.post("/create", response_model=PollSchema)
+@poll_router.post("/create", response_model=PollRes)
 async def create_poll(
-    poll: PollSchema, session: Session = Depends(get_db),
+    poll: PollSchema, response: Response,
+    session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
     """Create a new poll."""
@@ -33,10 +32,16 @@ async def create_poll(
     session.add(new_poll)
     session.commit()
     session.refresh(new_poll)
-    return new_poll
+    if new_poll:
+        response.status_code = status.HTTP_201_CREATED
+        return new_poll
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail="Error occurred while creating poll"
+    )
 
 
-@poll_router.get("/{id_}", response_model=PollSchema)
+@poll_router.get("/{id_}", response_model=PollRes)
 async def retrieve_poll_by_id(id_: int, session: Session = Depends(get_db)):
     """Retrieve a poll by the given id."""
     get_poll = session.query(Poll).filter(Poll.id == id_).first()
@@ -50,7 +55,7 @@ async def retrieve_poll_by_id(id_: int, session: Session = Depends(get_db)):
     return get_poll
 
 
-@poll_router.put("/update/{id_}", response_model=PollSchema)
+@poll_router.put("/update/{id_}", response_model=PollRes)
 async def update_poll(
     id_: int, poll: PollSchema, session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)

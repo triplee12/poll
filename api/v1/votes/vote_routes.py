@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from api.v1.database_config import get_db
 from api.v1.users.oauth import get_current_user
 from api.v1.models import Vote
-from api.v1.schema import VoteRes, VoteSchema
+from .schemas import VoteRes, VoteSchema
 
 vote_router = APIRouter(prefix="/votes", tags=["votes"])
 

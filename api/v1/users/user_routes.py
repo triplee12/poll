@@ -4,15 +4,13 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-
 from api.v1.database_config import get_db
 from api.v1.models import Moderator, User
-from api.v1.users.oauth import get_current_user
-from api.v1.schema import (
-    User as UserSchema, AccessToken,
-    Moderator as ModeratorSchema
+from .schemas import (
+    ModeratorRes, UserSchema, AccessToken,
+    ModeratorSchema, UserRes
 )
-from .oauth import create_token
+from .oauth import create_token, get_current_user
 from .utils import verify_pwd
 
 user_router = APIRouter(prefix="/users", tags=["users"])
@@ -20,7 +18,7 @@ user_router = APIRouter(prefix="/users", tags=["users"])
 # [User]
 
 
-@user_router.get("/")
+@user_router.get("/", response_model=UserRes)
 async def retrieve_users(
     session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -34,7 +32,7 @@ async def retrieve_users(
         return users
 
 
-@user_router.get("/{uuid_pk}")
+@user_router.get("/{uuid_pk}", response_model=UserRes)
 async def get_user_by_id(
     uuid_pk: str, session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -53,7 +51,7 @@ async def get_user_by_id(
         return user
 
 
-@user_router.put("/{uuid_pk}/update")
+@user_router.put("/{uuid_pk}/update", response_model=UserRes)
 async def update_user(
     uuid_pk: str, updated_user: UserSchema,
     session: Session = Depends(get_db),
@@ -109,7 +107,7 @@ async def delete_user(
     return
 
 
-@user_router.post("/create", response_model=UserSchema)
+@user_router.post("/create", response_model=UserRes)
 async def create(
     user: UserSchema, response: Response,
     session: Session = Depends(get_db)
@@ -159,7 +157,7 @@ def login(
 # [Moderator]
 
 
-@user_router.get("/moderators", response_model=ModeratorSchema)
+@user_router.get("/moderators", response_model=ModeratorRes)
 async def get_moderators(
     session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -172,7 +170,7 @@ async def get_moderators(
         return moderators
 
 
-@user_router.get("/moderators/{id_}", response_model=ModeratorSchema)
+@user_router.get("/moderators/{id_}", response_model=ModeratorRes)
 async def get_moderator(
     id_: str, session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -191,7 +189,7 @@ async def get_moderator(
         return moderator
 
 
-@user_router.put("/moderators/{id_}/update", response_model=ModeratorSchema)
+@user_router.put("/moderators/{id_}/update", response_model=ModeratorRes)
 async def update_moderator(
     id_: str, moderator: ModeratorSchema,
     session: Session = Depends(get_db),
@@ -252,7 +250,7 @@ async def delete_moderator(
         )
 
 
-@user_router.post("/moderators/create", response_model=ModeratorSchema)
+@user_router.post("/moderators/create", response_model=ModeratorRes)
 async def create_moderator(
     moderator: ModeratorSchema, response: Response,
     current_user: str = Depends(get_current_user),
