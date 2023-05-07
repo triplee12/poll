@@ -11,7 +11,7 @@ from .schemas import (
     ModeratorSchema, UserRes
 )
 from .oauth import create_token, get_current_user
-from .utils import verify_pwd
+from .utils import verify_pwd, hash_pwd
 
 user_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -113,6 +113,7 @@ async def create(
     session: Session = Depends(get_db)
 ):
     """Create a new user."""
+    user.password = hash_pwd(user.password)
     new_user = User(**user.dict())
     session.add(new_user)
     session.commit()

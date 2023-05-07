@@ -25,7 +25,10 @@ class User(Base):
         TIMESTAMP(timezone=True), nullable=False,
         server_default=text("now()")
     )
-    updated_at = Column(DateTime(timezone=True), server_default=None, index=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=None,
+        index=False
+    )
 
     def __repr__(self):
         """User representation."""
@@ -53,7 +56,10 @@ class Poll(Base):
         TIMESTAMP(timezone=True), nullable=False,
         server_default=text("now()")
     )
-    updated_at = Column(DateTime(timezone=True), server_default=None, index=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=None,
+        index=False
+    )
     is_add_choices_active = Column(BOOLEAN, nullable=True, default=False)
     is_voting_active = Column(BOOLEAN, nullable=True, default=False)
 
@@ -133,7 +139,10 @@ class Moderator(Base):
         TIMESTAMP(timezone=True), nullable=False,
         server_default=text("now()")
     )
-    updated_at = Column(DateTime(timezone=True), server_default=None, index=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=None,
+        index=False
+    )
 
     def __repr__(self):
         """Moderator interface."""
