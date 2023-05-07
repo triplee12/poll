@@ -54,8 +54,8 @@ class Choice(BaseModel):
     poll_id: int
     text: str
     image: str
-    votes: int
-    created_by: str
+    votes: Optional[int]
+    created_by: Optional[str]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
