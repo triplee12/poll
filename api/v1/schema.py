@@ -60,6 +60,22 @@ class Choice(BaseModel):
     updated_at: Optional[datetime]
 
 
+class VoteSchema(BaseModel):
+    """Vote schema."""
+
+    user: Optional[UUID]
+    choice_id: int
+
+
+class VoteRes(BaseModel):
+    """Vote response schema."""
+
+    id: int
+    user: UUID
+    choice_id: int
+    created_at: datetime
+
+
 class Moderator(BaseModel):
     """Moderator schema."""
 

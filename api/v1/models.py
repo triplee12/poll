@@ -103,6 +103,10 @@ class Vote(Base):
         "Choice", back_populates="votes",
         foreign_keys=[choice_id]
     )
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False,
+        server_default=text("now()")
+    )
 
 
 class Moderator(Base):

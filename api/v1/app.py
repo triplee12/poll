@@ -2,12 +2,13 @@
 """Poll API."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database_config import engine
-from .models import Base
-from .routes import poll_router
 from api.v1.users.user_routes import user_router
 from api.v1.bans.ban_routes import ban_router
 from api.v1.choices.choice_route import choice_router
+from api.v1.votes.vote_routes import vote_router
+from .database_config import engine
+from .models import Base
+from .routes import poll_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(
@@ -35,3 +36,4 @@ app.include_router(user_router)
 app.include_router(ban_router)
 app.include_router(poll_router)
 app.include_router(choice_router)
+app.include_router(vote_router)
