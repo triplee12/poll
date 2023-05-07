@@ -7,6 +7,7 @@ from .models import Base
 from .routes import poll_router
 from api.v1.users.user_routes import user_router
 from api.v1.bans.ban_routes import ban_router
+from api.v1.choices.choice_route import choice_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(
@@ -33,3 +34,4 @@ async def index():
 app.include_router(user_router)
 app.include_router(ban_router)
 app.include_router(poll_router)
+app.include_router(choice_router)
