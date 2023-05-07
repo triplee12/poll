@@ -21,7 +21,7 @@ testing_session_local = sessionmaker(
 )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def session():
     """Fixture: Database session."""
     Base.metadata.drop_all(bind=engine)
@@ -33,7 +33,7 @@ def session():
         db.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client(session):
     """Fixture: Return TestClient."""
     def get_test_db():
@@ -46,7 +46,7 @@ def client(session):
     yield TestClient(app)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def test_user(client):
     """Create a generic test user."""
     user_data1 = {
@@ -61,7 +61,7 @@ def test_user(client):
     return new_user
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def test_user1(client):
     """Create a generic test user."""
     user_data1 = {
@@ -76,7 +76,7 @@ def test_user1(client):
     return new_user
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def token(test_user):
     """Fixture: Create token for testuser."""
     access_token = create_token(
@@ -88,7 +88,7 @@ def token(test_user):
     return access_token
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def authorized_client(client, token):
     """Fixture: Authorize client fixture."""
     client.headers = {
@@ -103,7 +103,7 @@ def convert_poll(data):
     return Poll(**data)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def test_create_poll(test_user, session, test_user1):
     """Test creating poll."""
     res = [
