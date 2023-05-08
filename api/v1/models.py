@@ -14,7 +14,7 @@ class User(Base):
 
     __tablename__ = 'users'
     uuid_pk = Column(
-        UUID, primary_key=True,
+        "id", UUID(as_uuid=False), primary_key=True,
         server_default=text("gen_random_uuid()")
     )
     username = Column(String, nullable=False, unique=True)
@@ -46,7 +46,7 @@ class Poll(Base):
         nullable=False
     )
     created_by = Column(
-        UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
+        UUID, ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
     user = relationship("User", back_populates="polls",
@@ -83,7 +83,7 @@ class Choice(Base):
     image = Column(String(length=250), nullable=True)
     votes = relationship("Vote", back_populates="choice")
     created_by = Column(
-        UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"), nullable=False
+        UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     created_at = Column(
         TIMESTAMP(timezone=True), nullable=False,
@@ -104,7 +104,7 @@ class Vote(Base):
     __tablename__ = 'votes'
     id = Column(Integer, primary_key=True, index=True)
     user = Column(
-        UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
+        UUID, ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
     choice_id = Column(
@@ -128,11 +128,11 @@ class Moderator(Base):
     id = Column(Integer, primary_key=True, index=True)
     mod_for = Column(String(length=150), nullable=False)
     mod_user = Column(
-        UUID, ForeignKey("users.uuid_pk"),
+        UUID, ForeignKey("users.id"),
         nullable=False
     )
     created_by = Column(
-        UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
+        UUID, ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
     created_at = Column(
@@ -155,7 +155,7 @@ class Ban(Base):
     __tablename__ = "ban"
     id = Column(Integer, index=True, primary_key=True)
     poll_owner_id = Column(
-        UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
+        UUID, ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
     banned_by = Column(
@@ -163,7 +163,7 @@ class Ban(Base):
         nullable=False
     )
     user_id = Column(
-        UUID, ForeignKey("users.uuid_pk", ondelete="CASCADE"),
+        UUID, ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
     created_at = Column(

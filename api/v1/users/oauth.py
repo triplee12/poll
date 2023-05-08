@@ -1,19 +1,106 @@
 #!/usr/bin/python3
 """Authentication support."""
 from datetime import datetime, timedelta
+from typing import Optional
 from jose import JWTError, jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import OAuth2  # OAuth2PasswordBearer
+from fastapi.security.base import SecurityBase
+from fastapi.security.utils import get_authorization_scheme_param
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from sqlalchemy.orm import Session
 from api.v1.database_config import get_db
 from api.v1.models import User
 from api.v1.settings import settings
 from .schemas import TokenData
 
-OAUTH2 = OAuth2PasswordBearer(tokenUrl="login")
+# OAUTH2 = OAuth2PasswordBearer(tokenUrl="login_token")
 SECRET_KEY = settings.OAUTH2_SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_WEEKS = settings.ACCESS_TOKEN_EXPIRE_WEEKS
+
+
+class BasicAuth(SecurityBase):
+    """Basic authentication."""
+
+    def __init__(self, scheme_name: str = None, auto_error: bool = True):
+        """Initialize the authentication."""
+        self.scheme_name = scheme_name or self.__class__.__name__
+        self.auto_error = auto_error
+
+    async def __call__(self, request: Request) -> Optional[str]:
+        """Call the given request."""
+        authorization: str = request.headers.get("Authorization")
+        scheme, param = get_authorization_scheme_param(authorization)
+        if not authorization or scheme.lower() != "basic":
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not authenticated"
+                )
+            return None
+        return param
+
+
+class OAuth2PasswordBearerCookie(OAuth2):
+    """Oauth2 password cookie authentication."""
+
+    def __init__(
+        self,
+        tokenUrl: str,
+        scheme_name: str = None,
+        scopes: dict = None,
+        auto_error: bool = True,
+    ):
+        """Initialize a new OAuth2 password cookie."""
+        if not scopes:
+            scopes = {}
+        flows = OAuthFlowsModel(
+            password={"tokenUrl": tokenUrl, "scopes": scopes}
+        )
+        super().__init__(
+            flows=flows,
+            scheme_name=scheme_name,
+            auto_error=auto_error
+        )
+
+    async def __call__(self, request: Request) -> Optional[str]:
+        """Call the given request."""
+        header_authorization: str = request.headers.get("Authorization")
+        cookie_authorization: str = request.cookies.get("Authorization")
+
+        header_scheme, header_param = get_authorization_scheme_param(
+            header_authorization
+        )
+        cookie_scheme, cookie_param = get_authorization_scheme_param(
+            cookie_authorization
+        )
+
+        if header_scheme.lower() == "bearer":
+            authorization = True
+            scheme = header_scheme
+            param = header_param
+
+        elif cookie_scheme.lower() == "bearer":
+            authorization = True
+            scheme = cookie_scheme
+            param = cookie_param
+
+        else:
+            authorization = False
+
+        if not authorization or scheme.lower() != "bearer":
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not authenticated"
+                )
+            return None
+        return param
+
+
+oauth2_scheme = OAuth2PasswordBearerCookie(tokenUrl="login_token")
+basic_auth = BasicAuth(auto_error=False)
 
 
 def create_token(data: dict):
@@ -41,10 +128,11 @@ def verify_token(token: str, credentials_exception):
 
 
 def get_current_user(
-        token: str = Depends(OAUTH2),
+        token: str = Depends(oauth2_scheme),
         session: Session = Depends(get_db)
 ):
     """Get current user helper."""
+    print(token)
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid credentials",

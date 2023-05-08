@@ -1,16 +1,22 @@
 #!/usr/bin/python3
 """Users routes."""
+import base64
 from datetime import datetime
+from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status, Response
+from fastapi.responses import RedirectResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from api.v1.database_config import get_db
 from api.v1.models import Moderator, User
+from api.v1.settings import settings
 from .schemas import (
-    ModeratorRes, UserSchema, AccessToken,
+    ModeratorRes, UserSchema,
     ModeratorSchema, UserRes
 )
-from .oauth import create_token, get_current_user
+from .oauth import create_token, get_current_user, basic_auth, BasicAuth
 from .utils import verify_pwd, hash_pwd
 
 user_router = APIRouter(prefix="/users", tags=["users"])
@@ -18,7 +24,7 @@ user_router = APIRouter(prefix="/users", tags=["users"])
 # [User]
 
 
-@user_router.get("/", response_model=UserRes)
+@user_router.get("/", response_model=List[UserRes])
 async def retrieve_users(
     session: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
@@ -113,23 +119,30 @@ async def create(
     session: Session = Depends(get_db)
 ):
     """Create a new user."""
-    user.password = hash_pwd(user.password)
-    new_user = User(**user.dict())
-    session.add(new_user)
-    session.commit()
-    session.refresh(new_user)
+    try:
+        user.password = hash_pwd(user.password)
+        new_user = User(**user.dict())
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
 
-    if new_user:
-        response.status_code = status.HTTP_201_CREATED
-        return new_user
-    raise HTTPException(
-        status.HTTP_422_UNPROCESSABLE_ENTITY,
-        detail="User not created. User with username or email already exists"
-    )
+        if new_user:
+            response.status_code = status.HTTP_201_CREATED
+            return new_user
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="User not created"
+        )
+    except IntegrityError as error:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="User with username or email already exists"
+        ) from error
 
 
-@user_router.post("/login", response_model=AccessToken)
-def login(
+@user_router.post("/login_token")
+def login_token(
+    response: Response,
     credentials: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_db)
 ):
@@ -149,10 +162,81 @@ def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
         )
-    access_token = create_token(
-        data={"id": q_username.uuid_pk, "username": q_username.username}
+    if q_username and verify_pwd(credentials.password, q_username.password):
+        response.status_code = status.HTTP_200_OK
+        access_token = create_token(
+            data={
+                "uuid_pk": q_username.uuid_pk,
+                "username": q_username.username
+            }
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail="Invalid data type"
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@user_router.post("/login_basic")
+async def login_basic(
+    auth: BasicAuth = Depends(basic_auth),
+    session: Session = Depends(get_db)
+):
+    """Login basic authentication."""
+    if not auth:
+        response = Response(
+            headers={"WWW-Authenticate": "Basic"},
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+        return response
+
+    try:
+        decoded = base64.b64decode(auth).decode("ascii")
+        username, _, password = decoded.partition(":")
+        user = session.query(User).filter(
+            User.username == username
+        ).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Incorrect email or password"
+            )
+
+        if user and verify_pwd(password, user.password):
+            access_token = create_token(
+                data={
+                    "uuid_pk": user.uuid_pk,
+                    "username": user.username
+                }
+            )
+
+            token = jsonable_encoder(access_token)
+
+            response = RedirectResponse(url="/api")
+            response.set_cookie(
+                "Authorization",
+                value=f"Bearer {token}",
+                domain="http://127.0.0.1:8000",
+                httponly=True,
+                max_age=settings.ACCESS_TOKEN_EXPIRE_WEEKS,
+                expires=settings.ACCESS_TOKEN_EXPIRE_WEEKS,
+            )
+            return response
+
+    except HTTPException:
+        response = Response(
+            headers={"WWW-Authenticate": "Basic"},
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+        return response
+
+
+@user_router.get("/logout")
+async def route_logout_and_remove_cookie():
+    """Logout the user."""
+    response = RedirectResponse(url="/api")
+    response.delete_cookie("Authorization", domain="http://127.0.0.1:8000")
+    return response
 
 
 # [Moderator]

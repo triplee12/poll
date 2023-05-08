@@ -17,7 +17,6 @@ class TokenData(BaseModel):
     """Token data."""
 
     uuid_pk: str
-    username: str
 
 
 class UserSchema(BaseModel):
