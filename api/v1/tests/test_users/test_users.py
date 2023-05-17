@@ -119,6 +119,89 @@ def test_login_basic_fail(client, username, password):
 
 
 def test_retrieve_users_fail(authorized_client):
-    """Test retrieve_users_success."""
+    """Test retrieve users fail."""
     users = authorized_client.get("users/")
     assert users.status_code == 403
+
+
+def test_retrieve_one_user_fail(client):
+    """Test retrieve one user fail."""
+    user = client.get("users/12345-567f35-2cd3wrhgb")
+    assert user.status_code == 403
+
+
+def test_update_user_fail(client):
+    """Test update user fail."""
+    data = {
+        "email": "user@example.com"
+    }
+    user = client.put("users/12345-567f35-2cd3wrhgb/update", data=data)
+    assert user.status_code == 403
+
+
+def test_delete_user_fail(client):
+    """Test delete user fail."""
+    user = client.delete("users/12345-567f35-2cd3wrhgb/delete")
+    assert user.status_code == 403
+
+
+def test_retrieve_moderators_fail(client):
+    """Test retrieve moderators fail."""
+    moderators = client.get("users/moderators")
+    assert moderators.status_code == 403
+
+
+def test_retrieve_one_moderator_fail(client):
+    """Retrieve one moderator fail."""
+    moderator = client.get("users/moderators/12345-567f35-2cd3wrhgb")
+    assert moderator.status_code == 403
+
+
+def test_update_moderator_fail(client):
+    """Test update moderator fail."""
+    data = {
+        "email": "user@example.com"
+    }
+    moderator = client.put(
+        "users/moderator/12345-567f35-2cd3wrhgb/update",
+        data=data
+    )
+    assert moderator.status_code == 404
+
+
+def test_delete_moderator_fail(client):
+    """Test delete moderator fail."""
+    user = client.delete("users/moderator/12345-567f35-2cd3wrhgb/delete")
+    assert user.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "mod_for, mod_user",
+    [
+        (1, "12345-567f35-2cd3wrhgb"),
+        (2, "12345-567f35-2cd3wrhgb"),
+        (3, "12345-567f35-2cd3wrhgb"),
+        (4, "12345-567f35-2cd3wrhgb"),
+        (5, "12345-567f35-2cd3wrhgb")
+    ]
+)
+def test_create_moderators_fail(client, mod_for, mod_user):
+    """Test creating moderators fail."""
+    new_moderators = {
+        "mod_for": mod_for,
+        "mod_user": mod_user
+    }
+    create = client.post(
+        "/users/moderators/create",
+        json=new_moderators
+    )
+
+    assert create.status_code == 403
+    print(create.json())
+    assert isinstance(create.json(), dict)
+
+
+def test_logout_fail(client):
+    """Test logout user fail."""
+    user = client.get("users/logout")
+    assert user.status_code == 403
